@@ -4,6 +4,10 @@
   "license": "GPL-3.0-or-later",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.28.11",
+  "engines": {
+    "node": ">=20.12"
+  },
   "scripts": {
     "build": "node build.mjs",
     "check": "tsc --noEmit",
