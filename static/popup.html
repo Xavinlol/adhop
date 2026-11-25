@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Adhop</title>
+    <link rel="stylesheet" href="ui.css">
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <header>
+      <h1>Adhop</h1>
+      <input type="checkbox" role="switch" id="enabled" aria-label="Enabled">
+    </header>
+    <fieldset id="body" class="plain" aria-label="Ad rules">
+      <form id="scope" role="radiogroup" aria-label="Rules for" hidden>
+        <label><input type="radio" name="scope" id="scope-all" checked><span>All channels</span></label>
+        <label><input type="radio" name="scope" id="scope-channel"><span id="channel-name"></span></label>
+      </form>
+      <rule-editor></rule-editor>
+      <button type="button" id="reset" class="quiet" hidden>Use the rules for all channels</button>
+    </fieldset>
+    <footer>
+      <span id="stats"></span>
+      <button type="button" id="settings" class="quiet">Settings</button>
+    </footer>
+    <script src="popup.js"></script>
+  </body>
+</html>

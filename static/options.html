@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Adhop settings</title>
+    <link rel="icon" href="icons/32.png">
+    <link rel="stylesheet" href="ui.css">
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Adhop</h1>
+        <p><span id="stats"></span> <button type="button" id="reset-stats" class="quiet" aria-label="Reset stats" hidden>Reset</button></p>
+      </div>
+      <label class="field">Enabled <input type="checkbox" role="switch" id="enabled"></label>
+    </header>
+    <fieldset id="body" class="plain" aria-label="Settings">
+      <section>
+        <h2>All channels</h2>
+        <rule-editor id="general"></rule-editor>
+      </section>
+      <section>
+        <h2>Single channels</h2>
+        <ul id="channels"></ul>
+        <p class="empty">Open a video, click the Adhop icon and pick the channel to give it its own rules.</p>
+      </section>
+      <section>
+        <h2>On YouTube</h2>
+        <label class="field">
+          <span>Show controls on ads<small>Status and a button to let the ad play</small></span>
+          <input type="checkbox" role="switch" id="show-controls">
+        </label>
+        <label class="field">
+          <span>Hide sponsored tiles<small>Promoted videos, banners and the panel next to the player</small></span>
+          <input type="checkbox" role="switch" id="hide-sponsored">
+        </label>
+      </section>
+      <section>
+        <h2>Shortcuts</h2>
+        <p class="field">Turn Adhop on or off <kbd data-command="toggle-enabled"></kbd></p>
+        <p class="field">Let the current ad play, or resume skipping <kbd data-command="toggle-let-play"></kbd></p>
+        <button type="button" id="change-shortcuts" class="quiet">Change shortcuts</button>
+      </section>
+    </fieldset>
+    <section>
+      <h2>Theme</h2>
+      <form id="themes" role="radiogroup" aria-label="Theme">
+        <label data-theme="graphite"><input type="radio" name="theme" value="graphite"><i></i>Graphite</label>
+        <label data-theme="midnight"><input type="radio" name="theme" value="midnight"><i></i>Midnight</label>
+        <label data-theme="plum"><input type="radio" name="theme" value="plum"><i></i>Plum</label>
+        <label data-theme="red"><input type="radio" name="theme" value="red"><i></i>Red</label>
+      </form>
+    </section>
+    <section>
+      <h2>Say thanks</h2>
+      <p class="thanks">Adhop is free. To say thanks, you can <a class="quiet" href="https://ko-fi.com/xavinlol" target="_blank" rel="noopener">buy me a coffee</a>.</p>
+    </section>
+    <template id="channel">
+      <li>
+        <details>
+          <summary><strong></strong><span></span></summary>
+          <rule-editor></rule-editor>
+          <button type="button" class="quiet">Remove channel</button>
+        </details>
+      </li>
+    </template>
+    <script src="options.js"></script>
+  </body>
+</html>

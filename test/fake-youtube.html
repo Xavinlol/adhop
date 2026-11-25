@@ -1,0 +1,189 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Fake player</title>
+<style>
+  div { margin: 0; padding: 0; border: 0; background: transparent; }
+</style>
+<div id="movie_player" class="html5-video-player" style="position: relative; width: 640px; height: 360px"><video></video></div>
+<ytd-ad-slot-renderer id="sponsored" style="display: block">Sponsored</ytd-ad-slot-renderer>
+<script>
+  const player = document.querySelector("#movie_player");
+  const video = player.querySelector("video");
+  const state = { abnormal: 0, skipped: 0, playerClicks: 0, ads: [], contentRates: [], contentMuted: null };
+  let viewerMuted = false;
+
+  player.getPlayerResponse = () => ({ videoDetails: { channelId: "UC_fake", author: "Fake Channel" } });
+  player.addEventListener("click", (event) => {
+    if (!event.target.closest("button")) state.playerClicks++;
+  });
+
+  function silence(seconds) {
+    const rate = 8000;
+    const size = seconds * rate;
+    const view = new DataView(new ArrayBuffer(44 + size));
+    const text = (at, value) => [...value].forEach((c, i) => view.setUint8(at + i, c.charCodeAt(0)));
+    text(0, "RIFF");
+    view.setUint32(4, 36 + size, true);
+    text(8, "WAVEfmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, rate, true);
+    view.setUint32(28, rate, true);
+    view.setUint16(32, 1, true);
+    view.setUint16(34, 8, true);
+    text(36, "data");
+    view.setUint32(40, size, true);
+    new Uint8Array(view.buffer, 44).fill(128);
+    return URL.createObjectURL(new Blob([view], { type: "audio/wav" }));
+  }
+
+  function load(seconds, rate) {
+    video.src = silence(seconds);
+    video.muted = viewerMuted;
+    video.playbackRate = rate;
+    video.addEventListener("loadedmetadata", () => { video.muted = viewerMuted; }, { once: true });
+    return video.play();
+  }
+
+  function modernButton() {
+    const button = document.createElement("button");
+    button.className = "ytp-skip-ad-button";
+    return { root: button, target: button, shown: button, after: () => button.classList.add("ytp-skip-ad-button-fix-fullscreen-grid") };
+  }
+
+  function legacyButton() {
+    const slot = document.createElement("div");
+    slot.className = "ytp-ad-skip-button-slot";
+    const button = document.createElement("button");
+    button.className = "ytp-ad-skip-button-modern ytp-button ytp-ad-skip-button-icon-delhi";
+    slot.append(button);
+    return { root: slot, target: slot, shown: button, after() {} };
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function addSkipButton({ legacy = false, canSkip, onSkip }) {
+    const { root, target, shown, after } = legacy ? legacyButton() : modernButton();
+    const onClick = (event) => {
+      event.preventDefault();
+      if (event.isTrusted === false) {
+        state.abnormal++;
+      } else if (canSkip()) {
+        state.skipped++;
+        onSkip();
+      }
+    };
+    target.addEventListener("click", onClick);
+    root.append("Skip");
+    after();
+    player.append(root);
+    return {
+      shown,
+      remove() {
+        target.removeEventListener("click", onClick);
+        root.remove();
+      },
+    };
+  }
+
+  async function playAd({ seconds, skipAfter = Infinity, stallMs = 0, sourceDelayMs = 0, legacy = false, stitched = false }) {
+    const ad = { startedAt: performance.now(), mutedSamples: 0, samples: 0, maxRate: 0, spedUpAt: null, skippedAt: null };
+    state.ads.push(ad);
+    const finished = Promise.withResolvers();
+    const button = addSkipButton({
+      legacy,
+      canSkip: () => video.currentTime >= skipAfter,
+      onSkip() {
+        ad.skippedAt = video.currentTime;
+        finished.resolve();
+      },
+    });
+    button.shown.style.display = "none";
+
+    const onTime = () => {
+      ad.samples++;
+      ad.mutedSamples += video.muted;
+      ad.maxRate = Math.max(ad.maxRate, video.playbackRate);
+      if (video.playbackRate > 1) ad.spedUpAt ??= video.currentTime;
+      if (video.currentTime >= skipAfter) button.shown.style.display = "";
+    };
+    const showAd = () => {
+      player.classList.add("ad-showing");
+      player.classList.toggle("ad-interrupting", !stitched);
+    };
+    video.addEventListener("timeupdate", onTime);
+    video.addEventListener("ended", finished.resolve, { once: true });
+    if (sourceDelayMs) {
+      showAd();
+      await sleep(sourceDelayMs);
+    }
+    const started = load(seconds, 1);
+    showAd();
+    await started;
+    if (stallMs) {
+      video.pause();
+      await sleep(stallMs);
+      await video.play();
+    }
+    await finished.promise;
+    video.removeEventListener("timeupdate", onTime);
+    video.removeEventListener("ended", finished.resolve);
+    button.remove();
+    ad.tookMs = performance.now() - ad.startedAt;
+  }
+
+  async function showEndCard(maxMs) {
+    const startedAt = performance.now();
+    video.removeAttribute("src");
+    video.load();
+    const skipped = Promise.withResolvers();
+    const button = addSkipButton({ canSkip: () => true, onSkip: skipped.resolve });
+    await Promise.race([skipped.promise, sleep(maxMs)]);
+    button.remove();
+    state.endCardMs = performance.now() - startedAt;
+  }
+
+  async function sampleContent() {
+    for (let i = 0; i < 20; i++) {
+      state.contentRates.push(video.playbackRate);
+      await sleep(50);
+    }
+    state.contentMuted = video.muted;
+  }
+
+  async function runMidroll({ ad, rate = 1 }) {
+    await load(60, rate);
+    video.currentTime = 20;
+    await sleep(500);
+    const position = video.currentTime;
+    await playAd(ad);
+    const started = load(60, rate);
+    player.classList.remove("ad-showing", "ad-interrupting");
+    video.currentTime = position;
+    await started;
+    await sampleContent();
+    state.resumedAt = video.currentTime - position;
+    return state;
+  }
+
+  async function run({ ads = [], muted = false, rate = 1, endCardMs = 0, holdMs = 0, gapMs = 0 }) {
+    viewerMuted = muted;
+    for (const ad of ads) await playAd(ad);
+    if (endCardMs) await showEndCard(endCardMs);
+    if (holdMs) {
+      video.removeAttribute("src");
+      video.load();
+      player.classList.remove("ad-showing", "ad-interrupting");
+      await sleep(holdMs);
+    }
+    const started = load(60, rate);
+    if (gapMs) await sleep(gapMs);
+    player.classList.remove("ad-showing", "ad-interrupting");
+    await started;
+    await sampleContent();
+    return state;
+  }
+</script>

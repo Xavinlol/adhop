@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Adhop",
+  "description": "Skips YouTube ads or speeds through them, with rules per channel.",
+  "version": "1.0.0",
+  "minimum_chrome_version": "123",
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "action": { "default_title": "Adhop", "default_popup": "popup.html" },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["storage"],
+  "commands": {
+    "toggle-enabled": {
+      "suggested_key": { "default": "Alt+Shift+S" },
+      "description": "Turn Adhop on or off"
+    },
+    "toggle-let-play": {
+      "suggested_key": { "default": "Alt+Shift+L" },
+      "description": "Let the current ad play, or resume skipping"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["page.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content.js"],
+      "css": ["youtube.css"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

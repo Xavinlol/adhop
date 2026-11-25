@@ -1,0 +1,19 @@
+{
+  "name": "adhop",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "tsc --noEmit",
+    "package": "node build.mjs --minify --outdir release/extension && node package.mjs",
+    "test": "node build.mjs && node --test test/extension.test.mjs"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.7",
+    "esbuild": "^0.28.2",
+    "fflate": "^0.8.3",
+    "playwright-core": "^1.65.1",
+    "typescript": "^7.0.2"
+  }
+}
