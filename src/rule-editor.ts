@@ -1,33 +1,47 @@
+import { create } from "./dom";
 import { describeRules } from "./format";
 import type { Action, Rules } from "./settings";
 
 const MAX_DELAY = 30;
+const SCALE = [0, 10, 20, MAX_DELAY];
 const RATES = [2, 4, 8, 16];
+const ACTIONS: Record<Action, string> = { click: "Skip", speed: "Speed up", play: "Let play" };
+const HOLD_NOTE = "YouTube holds the video back after a sped-up ad, so unskippable ads only get about 20% shorter.";
 
-const MARKUP = `
-  <form>
-    <div class="segments" role="radiogroup" aria-label="What happens to ads">
-      <label><input type="radio" name="action" value="click"><span>Skip</span></label>
-      <label><input type="radio" name="action" value="speed"><span>Speed up</span></label>
-      <label><input type="radio" name="action" value="play"><span>Let play</span></label>
-    </div>
-    <label class="ad">
-      <span class="field">Play before skipping <output></output></span>
-      <input type="range" name="delay" min="0" max="${MAX_DELAY}" step="1">
-      <span class="scale" aria-hidden="true"><i>0 s</i><i>10 s</i><i>20 s</i><i>30 s</i></span>
-    </label>
-    <label class="field rate">
-      Speed
-      <select name="rate">${RATES.map((rate) => `<option value="${rate}">${rate}x</option>`).join("")}</select>
-    </label>
-    <label class="field">
-      Mute ads
-      <input type="checkbox" role="switch" name="mute">
-    </label>
-    <p class="summary" aria-live="polite"></p>
-    <p class="summary hold">YouTube holds the video back after a sped-up ad, so unskippable ads only get about 20% shorter.</p>
-  </form>
-`;
+function createForm(delayText: HTMLOutputElement, summary: HTMLElement): HTMLFormElement {
+  return create(
+    "form",
+    {},
+    create(
+      "div",
+      { className: "segments", role: "radiogroup", ariaLabel: "What happens to ads" },
+      ...Object.entries(ACTIONS).map(([value, label]) =>
+        create("label", {}, create("input", { type: "radio", name: "action", value }), create("span", {}, label)),
+      ),
+    ),
+    create(
+      "label",
+      { className: "ad" },
+      create("span", { className: "field" }, "Play before skipping ", delayText),
+      create("input", { type: "range", name: "delay", min: "0", max: String(MAX_DELAY), step: "1" }),
+      create("span", { className: "scale", ariaHidden: "true" }, ...SCALE.map((mark) => create("i", {}, `${mark} s`))),
+    ),
+    create(
+      "label",
+      { className: "field rate" },
+      "Speed",
+      create("select", { name: "rate" }, ...RATES.map((rate) => new Option(`${rate}x`, String(rate)))),
+    ),
+    create(
+      "label",
+      { className: "field" },
+      "Mute ads",
+      create("input", { type: "checkbox", role: "switch", name: "mute" }),
+    ),
+    summary,
+    create("p", { className: "summary hold" }, HOLD_NOTE),
+  );
+}
 
 interface Fields extends HTMLFormControlsCollection {
   action: RadioNodeList;
@@ -37,18 +51,14 @@ interface Fields extends HTMLFormControlsCollection {
 }
 
 export class RuleEditor extends HTMLElement {
-  private readonly form: HTMLFormElement;
-  private readonly fields: Fields;
-  private readonly delayText: HTMLOutputElement;
-  private readonly summary: HTMLElement;
+  private readonly delayText = create("output");
+  private readonly summary = create("p", { className: "summary", ariaLive: "polite" });
+  private readonly form = createForm(this.delayText, this.summary);
+  private readonly fields = this.form.elements as Fields;
 
   constructor() {
     super();
-    this.innerHTML = MARKUP;
-    this.form = this.querySelector("form")!;
-    this.fields = this.form.elements as Fields;
-    this.delayText = this.form.querySelector("output")!;
-    this.summary = this.form.querySelector(".summary")!;
+    this.append(this.form);
     this.form.addEventListener("input", () => this.render());
     this.form.addEventListener("change", (event) => {
       event.stopPropagation();
