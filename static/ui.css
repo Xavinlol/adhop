@@ -258,12 +258,28 @@ rule-editor form > * + * {
   box-shadow: 0 0 0 2px var(--surface);
 }
 
+.ad input::-moz-range-track {
+  height: 20px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--ad) var(--played), transparent 0), var(--skipped);
+}
+
+.ad input::-moz-range-thumb {
+  width: 4px;
+  height: 32px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--text);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
 [data-action="speed"] .ad input {
   --skipped: repeating-linear-gradient(
-    115deg,
-    color-mix(in srgb, var(--ad) 60%, var(--well)) 0 3px,
-    var(--well) 3px var(--stripe)
-  );
+      115deg,
+      rgb(from var(--ad) r g b / 60%) 0 3px,
+      transparent 3px var(--stripe)
+    ),
+    var(--well);
 }
 
 [data-action="play"] .ad input {
@@ -272,6 +288,10 @@ rule-editor form > * + * {
 }
 
 [data-action="play"] .ad input::-webkit-slider-thumb {
+  opacity: 0;
+}
+
+[data-action="play"] .ad input::-moz-range-thumb {
   opacity: 0;
 }
 

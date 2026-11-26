@@ -6,12 +6,13 @@
   "type": "module",
   "packageManager": "pnpm@11.28.11",
   "engines": {
-    "node": ">=20.12"
+    "node": ">=22.18"
   },
   "scripts": {
     "build": "node build.mjs",
+    "build:firefox": "node build.mjs --browser firefox",
     "check": "tsc --noEmit",
-    "package": "node build.mjs --minify --outdir release/extension && node package.mjs",
+    "package": "node package.mjs",
     "test": "node build.mjs && node --test test/extension.test.mjs"
   },
   "devDependencies": {

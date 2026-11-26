@@ -84,6 +84,15 @@ async function renderShortcuts(): Promise<void> {
   }
 }
 
+function openShortcutSettings(): void {
+  const commands: typeof chrome.commands & { openShortcutSettings?: () => Promise<void> } = chrome.commands;
+  if (commands.openShortcutSettings) {
+    void commands.openShortcutSettings();
+  } else {
+    void chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
+  }
+}
+
 async function start(): Promise<void> {
   render(await loadSettings());
   renderStats(await loadStats());
@@ -98,9 +107,7 @@ async function start(): Promise<void> {
   hideSponsored.addEventListener("change", () => savePreferences({ hideSponsored: hideSponsored.checked }));
   themes.addEventListener("change", () => savePreferences({ theme: theme.value as Theme }));
   resetButton.addEventListener("click", resetStats);
-  find("#change-shortcuts").addEventListener("click", () =>
-    chrome.tabs.create({ url: "chrome://extensions/shortcuts" }),
-  );
+  find("#change-shortcuts").addEventListener("click", openShortcutSettings);
 }
 
 void start();
