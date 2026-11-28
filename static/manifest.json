@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Adhop",
+  "name": "Adhop: YouTube Ad Skipper",
+  "short_name": "Adhop",
   "description": "Skips YouTube ads or speeds through them, with rules per channel.",
   "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
   "action": { "default_title": "Adhop", "default_popup": "popup.html" },
